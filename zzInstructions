@@ -11,6 +11,6 @@ uv sync
 
 #add gitignore
 
-
+create a env file with your own openAI API key
 
 
