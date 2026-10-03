@@ -24,8 +24,10 @@ tools_by_name = {tool.name: tool for tool in tools}
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 llm_with_tools = llm.bind_tools(tools)
 
+user_input = input("Enter your query: ")
+
 # 3. Run initial query
-messages = [HumanMessage(content="Pull the first 2 rows from the customer_orders table.")]
+messages = [HumanMessage(content=user_input)]
 ai_message = llm_with_tools.invoke(messages)
 messages.append(ai_message)
 
