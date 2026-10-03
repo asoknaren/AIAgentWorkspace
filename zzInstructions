@@ -1,0 +1,16 @@
+#initialize uv package installer
+uv init
+
+#add the dependencies manually or using copilot
+
+#create a virtual enviroment & activate it
+
+source .venv/bin/activate
+
+uv sync
+
+#add gitignore
+
+
+
+
