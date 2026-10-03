@@ -13,4 +13,7 @@ uv sync
 
 create a env file with your own openAI API key
 
+add missing dependencies - langgraph etc
 
+uv run <Filename>.py 
+uv run 003_ToolCall_Langgraph_Traces.py 
