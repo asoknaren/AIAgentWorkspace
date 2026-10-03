@@ -8,6 +8,11 @@ from langgraph.graph import StateGraph, START, END
 
 load_dotenv()
 
+langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
+if langsmith_api_key and langsmith_api_key != "your_langsmith_api_key_here":
+    os.environ["LANGSMITH_TRACING"] = "true"
+    os.environ.setdefault("LANGSMITH_PROJECT", "agent-class")
+
 # 1. Initialize the LLM
 # Replace or ensure OPENAI_API_KEY is set in your environment
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
