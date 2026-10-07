@@ -1,11 +1,14 @@
 #initialize uv package installer
 uv init
+uv sync
 
 #add the dependencies manually or using copilot
 
 #create a virtual enviroment & activate it
 
-source .venv/bin/activate
+source .venv/bin/activate  (mac) 
+
+.\.venv\Scripts\Activate.ps1  (Windows)
 
 uv sync
 

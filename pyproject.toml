@@ -7,7 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
 	"langchain",
 	"langchain-core",
+	"langchain-mcp-adapters>=0.3.2",
 	"langchain-openai",
 	"langgraph",
+	"mcp>=1.30.0",
 	"python-dotenv",
 ]
