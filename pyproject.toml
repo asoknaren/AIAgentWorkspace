@@ -10,6 +10,7 @@ dependencies = [
 	"langchain-mcp-adapters>=0.3.2",
 	"langchain-openai",
 	"langgraph",
+	"langgraph-checkpoint-sqlite",
 	"mcp>=1.30.0",
 	"python-dotenv",
 ]
