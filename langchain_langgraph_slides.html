@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LangChain &amp; LangGraph for AI Agent Builders</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --text:#e2e8f0; --muted:#94a3b8;
+    --accent:#38bdf8; --accent2:#a78bfa; --good:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden}
+  .slide{position:absolute;inset:0;padding:48px 72px 72px;display:none;flex-direction:column;
+    animation:fade .25s ease;overflow-y:auto}
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:3rem;margin:0 0 .3em;line-height:1.1}
+  h2{font-size:2.1rem;margin:0 0 .6em;color:var(--accent);border-bottom:2px solid var(--panel2);padding-bottom:.25em}
+  h3{margin:.2em 0 .4em;color:var(--accent2);font-size:1.2rem}
+  p,li{font-size:1.2rem;line-height:1.5}
+  ul{margin:.3em 0;padding-left:1.2em} li{margin:.3em 0}
+  .sub{color:var(--muted);font-size:1.3rem}
+  .title{justify-content:center;align-items:flex-start}
+  .title h1{font-size:3.6rem;background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{background:var(--panel);border-radius:12px;padding:16px 20px;border-left:4px solid var(--accent)}
+  .card.p{border-color:var(--accent2)} .card.g{border-color:var(--good)} .card.w{border-color:var(--warn)}
+  .card p,.card li{font-size:1.05rem}
+  pre{background:#0b1220;border:1px solid var(--panel2);border-radius:10px;padding:14px 18px;margin:.4em 0;
+    font:0.95rem/1.45 Consolas,"Cascadia Code",monospace;overflow-x:auto;color:#cbd5e1}
+  code{font-family:Consolas,monospace;background:#0b1220;padding:1px 6px;border-radius:5px;color:var(--good);font-size:.95em}
+  pre code{background:none;padding:0;color:inherit}
+  .k{color:#f472b6}.s{color:#a3e635}.c{color:#64748b}.f{color:#38bdf8}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:.8em 0}
+  .node{background:var(--panel2);border:2px solid var(--accent);border-radius:10px;padding:10px 16px;font-weight:600;font-size:1.05rem}
+  .node.p{border-color:var(--accent2)} .node.g{border-color:var(--good)} .node.w{border-color:var(--warn)} .node.b{border-color:var(--bad)}
+  .arrow{color:var(--muted);font-size:1.5rem}
+  .stack{display:flex;flex-direction:column;gap:8px}
+  table{border-collapse:collapse;width:100%;font-size:1.05rem}
+  th,td{border:1px solid var(--panel2);padding:8px 12px;text-align:left}
+  th{background:var(--panel);color:var(--accent)}
+  .tag{display:inline-block;background:var(--panel2);color:var(--muted);border-radius:20px;padding:2px 12px;font-size:.85rem;margin-right:6px}
+  .file{color:var(--muted);font-size:.9rem;margin-top:auto;padding-top:14px}
+  .note{color:var(--warn);font-size:1.05rem}
+  #bar{position:fixed;left:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s;z-index:5}
+  #nav{position:fixed;right:20px;bottom:14px;color:var(--muted);font-size:.9rem;z-index:5;display:flex;gap:10px;align-items:center}
+  #nav button{background:var(--panel);color:var(--text);border:1px solid var(--panel2);border-radius:6px;padding:4px 12px;cursor:pointer}
+  #nav button:hover{background:var(--panel2)}
+  #overview{position:fixed;inset:0;background:rgba(15,23,42,.97);z-index:10;display:none;padding:30px;overflow:auto}
+  #overview.on{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-content:start}
+  #overview div{background:var(--panel);border-radius:8px;padding:12px;cursor:pointer;font-size:.95rem;border:1px solid var(--panel2)}
+  #overview div:hover{border-color:var(--accent)}
+  #overview b{color:var(--accent)}
+  @media print{
+    html,body{overflow:visible;height:auto;background:#fff;color:#000}
+    .slide{position:relative;display:flex!important;page-break-after:always;min-height:100vh;background:var(--bg);color:var(--text)}
+    #bar,#nav,#overview{display:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide title">
+  <span class="tag">Hands-on course</span>
+  <h1>Building AI Agents with<br>LangChain &amp; LangGraph</h1>
+  <p class="sub">From a single tool call to stateful, persistent, multi-step workflows &mdash; and MCP</p>
+  <p class="sub" style="font-size:1rem">Navigate: ← → / Space · <b>O</b> overview · <b>F</b> fullscreen</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>Learning Roadmap</h2>
+  <div class="flow">
+    <div class="node">1. Models &amp; Messages</div><span class="arrow">→</span>
+    <div class="node">2. Tools</div><span class="arrow">→</span>
+    <div class="node">3. Structured Output</div><span class="arrow">→</span>
+    <div class="node p">4. create_agent</div><span class="arrow">→</span>
+    <div class="node p">5. Observability</div>
+  </div>
+  <div class="flow">
+    <div class="node g">6. LangGraph State</div><span class="arrow">→</span>
+    <div class="node g">7. Routing &amp; Parallelism</div><span class="arrow">→</span>
+    <div class="node g">8. Memory &amp; Time Travel</div><span class="arrow">→</span>
+    <div class="node w">9. Context vs State</div><span class="arrow">→</span>
+    <div class="node w">10. MCP &amp; Studio</div>
+  </div>
+  <div class="cols" style="margin-top:20px">
+    <div class="card"><h3>LangChain</h3><p>Building blocks: models, messages, tools, structured output, and the prebuilt <code>create_agent</code> loop.</p></div>
+    <div class="card p"><h3>LangGraph</h3><p>Orchestration runtime: explicit state, nodes, edges, checkpoints, and replay for custom workflows.</p></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <h2>What Is an AI Agent?</h2>
+  <ul>
+    <li>An LLM that <b>decides</b> what to do next and <b>acts</b> through tools, observing results until the task is done.</li>
+    <li>Core loop: <b>Reason → Act (tool call) → Observe → Repeat → Answer</b></li>
+  </ul>
+  <div class="flow" style="margin-top:1em">
+    <div class="node">User request</div><span class="arrow">→</span>
+    <div class="node p">LLM decides</div><span class="arrow">→</span>
+    <div class="node g">Tool executes</div><span class="arrow">→</span>
+    <div class="node p">LLM reads result</div><span class="arrow">→</span>
+    <div class="node">Final answer</div>
+  </div>
+  <div class="cols3" style="margin-top:1em">
+    <div class="card"><h3>Model</h3><p>The reasoning engine (e.g. <code>gpt-4o</code>).</p></div>
+    <div class="card p"><h3>Tools</h3><p>Functions that reach data and the outside world.</p></div>
+    <div class="card g"><h3>State / Memory</h3><p>What the agent knows across steps and turns.</p></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <h2>LangChain vs LangGraph</h2>
+  <table>
+    <tr><th></th><th>LangChain</th><th>LangGraph</th></tr>
+    <tr><td><b>Purpose</b></td><td>Components &amp; high-level agent API</td><td>Low-level stateful orchestration</td></tr>
+    <tr><td><b>Key API</b></td><td><code>ChatOpenAI</code>, <code>@tool</code>, <code>create_agent</code></td><td><code>StateGraph</code>, nodes, edges, checkpointers</td></tr>
+    <tr><td><b>Control flow</b></td><td>Model decides (tool loop)</td><td>You decide (routing, loops, parallel)</td></tr>
+    <tr><td><b>Persistence</b></td><td>Via a checkpointer passed to <code>create_agent</code></td><td>Native: checkpoints, threads, replay</td></tr>
+  </table>
+  <p class="note" style="margin-top:1em">Not competitors: <code>create_agent</code> returns a compiled LangGraph graph.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <h2>1 · Models, Messages &amp; Streaming</h2>
+  <div class="cols">
+<pre><code><span class="k">from</span> langchain_openai <span class="k">import</span> ChatOpenAI
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> (
+    SystemMessage, HumanMessage)
+
+llm = ChatOpenAI(model=<span class="s">"gpt-4o"</span>)
+
+<span class="c"># single call</span>
+reply = llm.<span class="f">invoke</span>(<span class="s">"What does an agent do?"</span>)
+
+<span class="c"># streaming tokens</span>
+<span class="k">for</span> chunk <span class="k">in</span> llm.<span class="f">stream</span>(<span class="s">"Write a poem"</span>):
+    print(chunk.content, end=<span class="s">""</span>)
+
+<span class="c"># message roles</span>
+llm.invoke([
+  SystemMessage(<span class="s">"Answer in five words."</span>),
+  HumanMessage(<span class="s">"Capital of France?"</span>)])</code></pre>
+    <div class="stack">
+      <div class="card"><h3>invoke</h3><p>One request, one full response.</p></div>
+      <div class="card p"><h3>stream</h3><p>Yields chunks as they are generated &mdash; responsive UIs.</p></div>
+      <div class="card g"><h3>Messages</h3><p><code>SystemMessage</code> sets behavior, <code>HumanMessage</code> is user input, <code>AIMessage</code> is the reply, <code>ToolMessage</code> carries tool results.</p></div>
+    </div>
+  </div>
+  <div class="file">Files: 004_Langchain_Structuredoutput.py</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <h2>2 · Tools: Giving the Model Hands</h2>
+<pre><code><span class="k">from</span> langchain_core.tools <span class="k">import</span> tool
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">get_share_price</span>(symbol: str) -> float:
+    <span class="s">"""Return the current sample share price for a ticker symbol."""</span>
+    <span class="k">return</span> {<span class="s">"AAPL"</span>: 241.5}.get(symbol.upper(), 0.0)
+
+get_share_price.name         <span class="c"># 'get_share_price'</span>
+get_share_price.description  <span class="c"># from the docstring</span>
+get_share_price.args         <span class="c"># JSON schema from type hints</span>
+get_share_price.invoke({<span class="s">"symbol"</span>: <span class="s">"AAPL"</span>})</code></pre>
+  <ul>
+    <li>LangChain builds the <b>JSON Schema</b> from <b>type hints + docstring</b> &mdash; write both carefully; the model reads them.</li>
+    <li>A tool is just a function the model may <i>request</i>; your code executes it.</li>
+  </ul>
+  <div class="file">Files: 001_ToolCall.py · 002_ToolCall_Langchain_agents.py · 004_Langchain_Structuredoutput.py</div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <h2>3 · The Manual Tool-Calling Loop</h2>
+  <div class="flow">
+    <div class="node">bind_tools</div><span class="arrow">→</span>
+    <div class="node p">AIMessage.tool_calls</div><span class="arrow">→</span>
+    <div class="node g">run tool locally</div><span class="arrow">→</span>
+    <div class="node w">ToolMessage(tool_call_id)</div><span class="arrow">→</span>
+    <div class="node">final invoke</div>
+  </div>
+<pre><code>llm_with_tools = llm.<span class="f">bind_tools</span>(tools)
+ai_message = llm_with_tools.invoke(messages)
+messages.append(ai_message)
+
+<span class="k">for</span> call <span class="k">in</span> ai_message.tool_calls:      <span class="c"># name, args, id</span>
+    result = tools_by_name[call[<span class="s">"name"</span>]].invoke(call[<span class="s">"args"</span>])
+    messages.append(ToolMessage(content=str(result),
+                                tool_call_id=call[<span class="s">"id"</span>]))
+
+final = llm_with_tools.invoke(messages)   <span class="c"># synthesis turn</span></code></pre>
+  <p>The model never runs code &mdash; it emits a <b>request</b>. Your app executes it and feeds back an <b>observation</b>. <code>create_agent</code> automates exactly this.</p>
+  <div class="file">Files: 001_ToolCall.py</div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <h2>4 · Structured Output</h2>
+  <div class="cols">
+<pre><code><span class="k">class</span> <span class="f">Company</span>(BaseModel):
+    name: str = Field(description=<span class="s">"Company name"</span>)
+    ticker: str = Field(description=<span class="s">"Ticker"</span>)
+    founded_year: int = Field(description=<span class="s">"Year founded"</span>)
+
+structured = llm.<span class="f">with_structured_output</span>(Company)
+company = structured.invoke(
+    <span class="s">"Details about Amazon."</span>)
+print(company.ticker)   <span class="c"># typed attribute</span></code></pre>
+    <div class="stack">
+      <div class="card"><h3>Why</h3><p>Turn free text into validated Python objects &mdash; no regex parsing.</p></div>
+      <div class="card p"><h3>Pattern in workflows</h3><p>Use it for <b>classification and routing</b>: <code>Literal["technical","billing","general"]</code> and <code>TriageAnalysis</code> (type, sentiment, department).</p></div>
+    </div>
+  </div>
+  <div class="file">Files: 004_Langchain_Structuredoutput.py · 021_State_LangGraph.py · 022_langgraph_tktmgmt_usecase.py</div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <h2>5 · create_agent: The Prebuilt Agent Loop</h2>
+<pre><code><span class="k">from</span> langchain.agents <span class="k">import</span> create_agent
+
+agent = <span class="f">create_agent</span>(
+    model=<span class="s">"openai:gpt-4o"</span>,
+    tools=[get_weather, get_population],
+    system_prompt=<span class="s">"You are a concise travel assistant."</span>,
+)
+result = agent.invoke({<span class="s">"messages"</span>: [(<span class="s">"user"</span>, <span class="s">"Compare Rome and London."</span>)]})
+print(result[<span class="s">"messages"</span>][-1].content)</code></pre>
+  <div class="cols">
+    <div class="card"><h3>You provide</h3><p>Model, tools, system prompt.</p></div>
+    <div class="card p"><h3>It manages</h3><p>Model call → tool calls (possibly parallel) → results back to model → final answer.</p></div>
+  </div>
+  <p>Inspect it: <code>agent.get_graph().draw_mermaid()</code> &mdash; it <b>is</b> a LangGraph graph (model node ⇄ tools node).</p>
+  <div class="file">Files: 002_ToolCall_Langchain_agents.py · 006_langchain_createagent.py</div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <h2>6 · Middleware: Hooks Around the Loop</h2>
+<pre><code><span class="k">from</span> langchain.agents.middleware <span class="k">import</span> wrap_tool_call
+
+<span class="f">@wrap_tool_call</span>
+<span class="k">def</span> <span class="f">log_tool_call</span>(request, handler):
+    call = request.tool_call
+    print(f<span class="s">"[wrap_tool_call] {call['name']}({call['args']})"</span>)
+    <span class="k">return</span> handler(request)       <span class="c"># continue normally</span>
+
+agent = create_agent(model=..., tools=tools,
+                     middleware=[log_tool_call])</code></pre>
+  <ul>
+    <li>Middleware <b>wraps</b> steps of the agent: observe, modify, retry, block, or short-circuit.</li>
+    <li>Typical uses: logging, guardrails, error handling, approval gates, rate limiting.</li>
+  </ul>
+  <div class="file">Files: 006_langchain_createagent.py</div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <h2>7 · Observability: Debug Stream &amp; LangSmith</h2>
+  <div class="cols">
+    <div>
+      <h3>Local: stream events</h3>
+<pre><code><span class="k">for</span> event <span class="k">in</span> agent.<span class="f">stream</span>(
+    {<span class="s">"messages"</span>: [(<span class="s">"user"</span>, prompt)]},
+    stream_mode=<span class="s">"debug"</span>):
+    pprint(event)</code></pre>
+      <p>See each task, input, and result step by step.</p>
+    </div>
+    <div>
+      <h3>Cloud: LangSmith traces</h3>
+<pre><code>os.environ[<span class="s">"LANGSMITH_TRACING"</span>] = <span class="s">"true"</span>
+os.environ[<span class="s">"LANGSMITH_PROJECT"</span>] = <span class="s">"agent-class"</span>
+<span class="c"># + LANGSMITH_API_KEY in .env</span></code></pre>
+      <p>Every LLM call, tool call, latency and token count appears as a trace tree &mdash; no code change.</p>
+    </div>
+  </div>
+  <p class="note">Set <code>LANGSMITH_TRACING=false</code> to opt out.</p>
+  <div class="file">Files: 003_ToolCall_with_Traces.py · 004_ToolCall_langsmith_traces.py</div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <h2>8 · LangGraph Core: State, Nodes, Edges</h2>
+  <div class="cols3">
+    <div class="card"><h3>State</h3><p>Shared data flowing through the graph (<code>TypedDict</code>).</p></div>
+    <div class="card p"><h3>Nodes</h3><p>Functions that read state and return a <b>partial update</b>.</p></div>
+    <div class="card g"><h3>Edges</h3><p>Decide what runs next. <code>START</code> / <code>END</code> mark boundaries.</p></div>
+  </div>
+<pre><code>builder = <span class="f">StateGraph</span>(LessonState)            <span class="c"># 1-2 schema + builder</span>
+builder.add_node(<span class="s">"prepare"</span>, prepare_node)       <span class="c"># 3 nodes</span>
+builder.add_edge(START, <span class="s">"prepare"</span>)              <span class="c"># 4 edges</span>
+builder.add_edge(<span class="s">"prepare"</span>, END)
+graph = builder.<span class="f">compile</span>()                      <span class="c"># 5 compile</span>
+graph.invoke({<span class="s">"request"</span>: <span class="s">"hello"</span>})                <span class="c"># 6 run</span></code></pre>
+  <p>A node returns only what it changes: <code>{"research_a": "..."}</code> &mdash; LangGraph merges it into state.</p>
+  <div class="file">Files: 005_graph.md · 006_langgraph_intro.py · 007_langgraph_topics1.py</div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <h2>9 · Reducers: Replace or Combine</h2>
+  <div class="cols">
+<pre><code><span class="k">class</span> <span class="f">GraphState</span>(TypedDict):
+    <span class="c"># merges new messages into history</span>
+    messages: Annotated[list[AnyMessage],
+                        add_messages]
+    <span class="c"># appends each node's notes</span>
+    node_history: Annotated[list[str],
+                            operator.add]
+    <span class="c"># no reducer: newest value wins</span>
+    summary: str</code></pre>
+    <div class="stack">
+      <div class="card"><h3>No reducer</h3><p>Update <b>replaces</b> the value (<code>summary</code>, <code>reply</code>).</p></div>
+      <div class="card p"><h3>With reducer</h3><p>Update is <b>combined</b>: <code>operator.add</code> appends lists; <code>add_messages</code> merges chat history.</p></div>
+      <div class="card w"><h3>Why it matters</h3><p>Parallel nodes writing the same field in one superstep are merged safely by the reducer.</p></div>
+    </div>
+  </div>
+  <div class="file">Files: 006_langgraph_intro.py · 007_langgraph_topics1.py</div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <h2>10 · Conditional Edges &amp; the Tool Loop</h2>
+  <div class="flow">
+    <div class="node">START</div><span class="arrow">→</span>
+    <div class="node p">chatbot</div><span class="arrow">→</span>
+    <div class="node w">tools_condition</div>
+    <span class="arrow">→ tool calls →</span>
+    <div class="node g">tools</div><span class="arrow">↩ chatbot</span>
+  </div>
+  <p style="margin-top:-.4em">no tool calls → <b>END</b></p>
+<pre><code>builder.add_conditional_edges(<span class="s">"chatbot"</span>, tools_condition,
+                              {<span class="s">"tools"</span>: <span class="s">"tools"</span>, END: END})
+builder.add_edge(<span class="s">"tools"</span>, <span class="s">"chatbot"</span>)       <span class="c"># loop back</span></code></pre>
+  <ul>
+    <li><b>Conditional edge</b>: a function reads state and returns the next node.</li>
+    <li><b>Loop</b>: route an edge back to an earlier node &mdash; this is the agent loop, built by hand.</li>
+    <li><code>ToolNode</code> and <code>tools_condition</code> are prebuilt helpers for tool execution and routing.</li>
+  </ul>
+  <div class="file">Files: 006_langgraph_intro.py</div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <h2>11 · Routing Pattern: Support Ticket Classifier</h2>
+  <div class="flow">
+    <div class="node">ticket</div><span class="arrow">→</span>
+    <div class="node p">classify_intent<br><small>structured output</small></div><span class="arrow">→</span>
+    <div class="stack">
+      <div class="node g">technical_support</div>
+      <div class="node g">billing_support</div>
+      <div class="node g">general_support</div>
+    </div><span class="arrow">→</span><div class="node">END</div>
+  </div>
+<pre><code><span class="k">def</span> <span class="f">route_ticket</span>(state) -> str:
+    <span class="k">return</span> {<span class="s">"technical"</span>: <span class="s">"technical_support"</span>,
+            <span class="s">"billing"</span>:   <span class="s">"billing_support"</span>}.get(state[<span class="s">"category"</span>], <span class="s">"general_support"</span>)</code></pre>
+  <p>LLM classifies with a <code>Literal</code> schema → deterministic Python routes → specialist prompt answers.</p>
+  <div class="file">Files: 021_State_LangGraph.py</div>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <h2>12 · Real-World Use Case: CRM Ticket Triage</h2>
+  <div class="flow">
+    <div class="node p">triage + sentiment</div><span class="arrow">→</span>
+    <div class="node w">route_decision</div>
+  </div>
+  <div class="cols3">
+    <div class="card"><h3>is_angry</h3><p>→ <code>escalate</code><br>Customer_Success_Escalations, alert the account exec.</p></div>
+    <div class="card p"><h3>type = defect</h3><p>→ <code>match_defects</code><br>Vector-search similar defects for the release; suggest hotfix.</p></div>
+    <div class="card g"><h3>otherwise</h3><p>→ <code>standard_route</code><br>Assign department, ready for pick-up.</p></div>
+  </div>
+  <ul>
+    <li>Priority-ordered business rules live in plain Python; the LLM only extracts <code>TriageAnalysis</code>.</li>
+    <li>Rich state: ticket text, history, sentiment, department, similar defects, recommended action.</li>
+  </ul>
+  <div class="file">Files: 022_langgraph_tktmgmt_usecase.py</div>
+</section>
+
+<!-- 17 -->
+<section class="slide">
+  <h2>13 · Supersteps &amp; Parallel Execution</h2>
+  <div class="flow">
+    <div class="node">prepare</div><span class="arrow">→</span>
+    <div class="stack"><div class="node g">research_a</div><div class="node g">research_b</div></div>
+    <span class="arrow">→</span>
+    <div class="node p">summarize</div><span class="arrow">→</span><div class="node">END</div>
+  </div>
+<pre><code>builder.add_edge(<span class="s">"prepare"</span>, <span class="s">"research_a"</span>)          <span class="c"># fan-out</span>
+builder.add_edge(<span class="s">"prepare"</span>, <span class="s">"research_b"</span>)
+builder.add_edge([<span class="s">"research_a"</span>, <span class="s">"research_b"</span>], <span class="s">"summarize"</span>)  <span class="c"># join</span></code></pre>
+  <table>
+    <tr><th>Superstep</th><th>Nodes</th></tr>
+    <tr><td>1</td><td><code>prepare</code></td></tr>
+    <tr><td>2</td><td><code>research_a</code> + <code>research_b</code> (parallel)</td></tr>
+    <tr><td>3</td><td><code>summarize</code> (waits for both)</td></tr>
+  </table>
+  <div class="file">Files: 007_langgraph_topics1.py</div>
+</section>
+
+<!-- 18 -->
+<section class="slide">
+  <h2>14 · Memory: Checkpointers &amp; Threads</h2>
+<pre><code>graph = builder.compile(checkpointer=<span class="f">MemorySaver</span>())
+config = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"memory-demo"</span>}}
+
+graph.invoke({<span class="s">"message"</span>: <span class="s">"My favorite color is blue."</span>}, config)
+graph.invoke({<span class="s">"message"</span>: <span class="s">"I also like hiking."</span>},   config)
+<span class="c"># reply: "I remember 2 message(s): ...blue; ...hiking"</span></code></pre>
+  <div class="cols">
+    <div class="card"><h3>Checkpointer</h3><p>Saves a state snapshot after every step.</p></div>
+    <div class="card p"><h3>thread_id</h3><p>Identifies a conversation. Same ID = restored memory; new ID = fresh start.</p></div>
+  </div>
+  <p class="note">On a resumed thread, send only new input. Resending a reducer field (e.g. a list with <code>operator.add</code>) would append it twice.</p>
+  <div class="file">Files: 007_langgraph_topics1.py · 008_langgraph_topics2.py</div>
+</section>
+
+<!-- 19 -->
+<section class="slide">
+  <h2>15 · Persistence: MemorySaver → SQLite</h2>
+  <div class="cols">
+<pre><code><span class="k">from</span> langgraph.checkpoint.sqlite <span class="k">import</span> SqliteSaver
+
+<span class="k">with</span> SqliteSaver.from_conn_string(
+        <span class="s">"langgraph_topics2.sqlite"</span>) <span class="k">as</span> saver:
+    graph = build_graph(saver)
+    graph.invoke({<span class="s">"message"</span>: <span class="s">"I prefer window seats."</span>}, cfg)
+
+<span class="c"># later: new saver, same file, same thread</span>
+<span class="k">with</span> SqliteSaver.from_conn_string(...) <span class="k">as</span> saver:
+    graph = build_graph(saver)
+    graph.invoke({<span class="s">"message"</span>: <span class="s">"What seat?"</span>}, cfg)</code></pre>
+    <table>
+      <tr><th>Saver</th><th>Lifetime</th></tr>
+      <tr><td><code>MemorySaver</code> / <code>InMemorySaver</code></td><td>Process only</td></tr>
+      <tr><td><code>SqliteSaver</code></td><td>Survives restarts</td></tr>
+      <tr><td>Production DBs</td><td>Postgres, etc.</td></tr>
+    </table>
+  </div>
+  <p>Needs <code>uv add langgraph-checkpoint-sqlite</code>.</p>
+  <div class="file">Files: 008_langgraph_topics2.py</div>
+</section>
+
+<!-- 20 -->
+<section class="slide">
+  <h2>16 · Checkpoint History &amp; Time Travel</h2>
+<pre><code>history = list(graph.<span class="f">get_state_history</span>(config))   <span class="c"># newest first</span>
+<span class="k">for</span> snap <span class="k">in</span> reversed(history):
+    print(snap.metadata[<span class="s">"step"</span>], snap.next, snap.values)
+
+<span class="c"># replay from an earlier checkpoint</span>
+past = next(s <span class="k">for</span> s <span class="k">in</span> history <span class="k">if</span> s.next == (<span class="s">"reply"</span>,))
+graph.invoke(None, past.config)
+
+graph.<span class="f">get_state</span>(config)    <span class="c"># latest state remains inspectable</span></code></pre>
+  <ul>
+    <li>Each snapshot records <b>values</b>, <b>next nodes</b>, and <b>metadata</b> (step, source).</li>
+    <li>Replay re-executes from a chosen checkpoint &mdash; debug, fork, or recover without starting over.</li>
+  </ul>
+  <div class="file">Files: 007_langgraph_topics1.py · 008_langgraph_topics2.py</div>
+</section>
+
+<!-- 21 -->
+<section class="slide">
+  <h2>17 · Context vs State (Runtime)</h2>
+  <div class="cols">
+    <div class="card"><h3>Context</h3>
+      <ul><li>Supplied by the app <b>each invocation</b></li><li>Read-only, immutable <code>@dataclass(frozen=True)</code></li><li>Not checkpointed</li><li>e.g. customer name, loyalty tier</li></ul></div>
+    <div class="card p"><h3>State</h3>
+      <ul><li>Mutable conversation data</li><li>Updated by tools via <code>Command</code></li><li>Saved by the checkpointer</li><li>e.g. <code>cart_items</code></li></ul></div>
+  </div>
+<pre><code><span class="f">@tool</span>
+<span class="k">def</span> <span class="f">add_item_to_cart</span>(item: str, runtime: ToolRuntime[ShopperContext, ShoppingState]):
+    <span class="k">return</span> Command(update={<span class="s">"cart_items"</span>: [item],
+        <span class="s">"messages"</span>: [ToolMessage(f<span class="s">"Added {item}"</span>, tool_call_id=runtime.tool_call_id)]})
+
+agent = create_agent(..., state_schema=ShoppingState,
+    context_schema=ShopperContext, checkpointer=InMemorySaver())
+agent.invoke({...}, config=config, context=ShopperContext(<span class="s">"Alex"</span>, <span class="s">"Gold"</span>, 10))</code></pre>
+  <div class="file">Files: 009_ContextState_Checkpoint.py</div>
+</section>
+
+<!-- 22 -->
+<section class="slide">
+  <h2>18 · Model Context Protocol (MCP)</h2>
+  <div class="flow">
+    <div class="node p">Agent (create_agent)</div><span class="arrow">⇄</span>
+    <div class="node w">MultiServerMCPClient</div><span class="arrow">⇄ stdio ⇄</span>
+    <div class="node g">FastMCP server</div>
+  </div>
+  <div class="cols">
+<pre><code><span class="c"># server: 401_local_mcp_server.py</span>
+mcp = FastMCP(<span class="s">"sample-order-server"</span>)
+<span class="f">@mcp.tool</span>()
+<span class="k">def</span> <span class="f">get_order_status</span>(order_id: str): ...</code></pre>
+<pre><code><span class="c"># client: 402_langchain_mcp_example.py</span>
+client = MultiServerMCPClient({<span class="s">"orders"</span>: {
+  <span class="s">"transport"</span>: <span class="s">"stdio"</span>, <span class="s">"command"</span>: sys.executable,
+  <span class="s">"args"</span>: [server_path]}})
+tools = <span class="k">await</span> client.<span class="f">get_tools</span>()
+agent = create_agent(model=llm, tools=tools)</code></pre>
+  </div>
+  <ul>
+    <li>An open standard: tools live in a server, discovered dynamically &mdash; written once, usable by any agent.</li>
+    <li>Adapters convert MCP tools into LangChain tools. Use <code>ainvoke</code> (async) with them.</li>
+  </ul>
+  <div class="file">Files: 400_test_mcpserver.py · 401_local_mcp_server.py · 402_langchain_mcp_example.py</div>
+</section>
+
+<!-- 23 -->
+<section class="slide">
+  <h2>19 · LangGraph Studio: Visual Dev &amp; Test</h2>
+<pre><code><span class="c">// langgraph.json</span>
+{ <span class="s">"graphs"</span>: { <span class="s">"intro"</span>: <span class="s">"./006_langgraph_intro.py:graph"</span>,
+               <span class="s">"researcher"</span>: <span class="s">"./007_langgraph_topics1.py:graph"</span>,
+               <span class="s">"time_travel"</span>: <span class="s">"./008_langgraph_topics2.py:graph"</span> } }
+
+$ uv run langgraph dev      <span class="c"># → Studio at smith.langchain.com/studio</span></code></pre>
+  <ul>
+    <li>Watch nodes execute; parallel nodes appear in the same step.</li>
+    <li>Inspect state at each step; re-run a thread from any earlier step.</li>
+    <li>Export a module-level <code>graph</code> compiled <b>without</b> a checkpointer &mdash; the server supplies persistence.</li>
+    <li>Keep <code>build_graph(checkpointer=None)</code> so scripts can still pass <code>MemorySaver()</code>.</li>
+  </ul>
+  <div class="file">Files: langgraph.json · README.md</div>
+</section>
+
+<!-- 24 -->
+<section class="slide">
+  <h2>When to Use What</h2>
+  <table>
+    <tr><th>Need</th><th>Choose</th></tr>
+    <tr><td>Model picks tools in a standard assistant loop</td><td><code>create_agent</code></td></tr>
+    <tr><td>Logging, guardrails around tool calls</td><td>Middleware</td></tr>
+    <tr><td>Typed, validated model results</td><td><code>with_structured_output</code></td></tr>
+    <tr><td>Route to specialists, parallel branches, custom loops</td><td><code>StateGraph</code></td></tr>
+    <tr><td>Remember conversations / recover / replay</td><td>Checkpointer + <code>thread_id</code></td></tr>
+    <tr><td>Per-request info that is not stored</td><td>Context schema</td></tr>
+    <tr><td>Reusable tools across agents/apps</td><td>MCP server</td></tr>
+  </table>
+  <p>Unsure? Start with <code>create_agent</code>; move to <code>StateGraph</code> when you need workflow control &mdash; a custom graph can embed an agent as a node.</p>
+</section>
+
+<!-- 25 -->
+<section class="slide">
+  <h2>Run the Labs</h2>
+<pre><code>uv sync                                   <span class="c"># install dependencies</span>
+<span class="c"># put OPENAI_API_KEY (and optional LANGSMITH_API_KEY) in .env</span>
+uv run 001_ToolCall.py
+uv run 006_langchain_createagent.py
+uv run 007_langgraph_topics1.py           <span class="c"># no API key needed</span>
+uv run 009_ContextState_Checkpoint.py
+uv run 402_langchain_mcp_example.py
+uv run langgraph dev</code></pre>
+  <table>
+    <tr><th>Lab</th><th>Files</th></tr>
+    <tr><td>Tools &amp; structured output</td><td>001 – 004</td></tr>
+    <tr><td>create_agent &amp; middleware</td><td>006_langchain_createagent</td></tr>
+    <tr><td>LangGraph fundamentals</td><td>005 – 008, 021, 022</td></tr>
+    <tr><td>Context/state &amp; MCP</td><td>009, 400 – 402</td></tr>
+  </table>
+</section>
+
+<!-- 26 -->
+<section class="slide title">
+  <h1>Key Takeaways</h1>
+  <ul>
+    <li>Agents = <b>model + tools + state</b> in a loop.</li>
+    <li><code>create_agent</code> for standard loops; <code>StateGraph</code> for controlled workflows.</li>
+    <li>State + <b>reducers</b> define how data merges; <b>supersteps</b> enable parallelism.</li>
+    <li><b>Checkpointers + thread_id</b> give memory, persistence, and time travel.</li>
+    <li>Separate <b>context</b> (per run) from <b>state</b> (saved).</li>
+    <li><b>MCP</b> standardizes tool access; <b>LangSmith/Studio</b> make agents observable.</li>
+  </ul>
+  <p class="sub">Questions?</p>
+</section>
+
+<div id="bar"></div>
+<div id="nav"><button id="prev">◀</button><span id="count"></span><button id="next">▶</button><button id="ov">Overview</button></div>
+<div id="overview"></div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  var bar=document.getElementById('bar'), count=document.getElementById('count'), ov=document.getElementById('overview');
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(s,k){s.classList.toggle('active',k===i)});
+    bar.style.width=((i+1)/slides.length*100)+'%';
+    count.textContent=(i+1)+' / '+slides.length;
+    history.replaceState(null,'','#'+(i+1));
+  }
+  slides.forEach(function(s,k){
+    var d=document.createElement('div'), h=s.querySelector('h1,h2');
+    d.innerHTML='<b>'+(k+1)+'.</b> '+(h?h.textContent:'');
+    d.onclick=function(){ov.classList.remove('on');show(k)};
+    ov.appendChild(d);
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){show(i-1)}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='o'||e.key==='O'||e.key==='Escape')ov.classList.toggle('on',e.key!=='Escape'&&!ov.classList.contains('on'));
+    else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  });
+  document.getElementById('prev').onclick=function(){show(i-1)};
+  document.getElementById('next').onclick=function(){show(i+1)};
+  document.getElementById('ov').onclick=function(){ov.classList.toggle('on')};
+  show((parseInt(location.hash.slice(1),10)||1)-1);
+})();
+</script>
+</body>
+</html>
