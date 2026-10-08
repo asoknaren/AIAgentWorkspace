@@ -36,7 +36,7 @@ class GraphState(TypedDict):
 
 @tool
 def lookup_course_fact(
-    topic: Literal["state", "reducer", "node", "condition", "loop"],
+    topic: Literal["state", "reducer", "node", "condition", "loop", "LLM", "FT"],
 ) -> str:
     """Look up a short definition of a LangGraph concept from this lesson."""
     facts = {
@@ -45,6 +45,8 @@ def lookup_course_fact(
         "node": "A node is a Python function or runnable that reads and updates state.",
         "condition": "A conditional edge chooses the next node based on current state.",
         "loop": "A loop is made by routing an edge back to an earlier node.",
+        "LLM": "A large language model (LLM) generates text based on input and can be used within LangGraph nodes.",
+        "FT": "Fine-tuning (FT) adapts a pre-trained LLM to perform better on specific tasks.",
     }
     return facts[topic]
 
@@ -59,7 +61,7 @@ def configure_langsmith() -> None:
         print("LangSmith tracing is off; set LANGSMITH_API_KEY to enable it.")
 
 
-def build_graph():
+def build_graph(checkpointer=None):
     """Build a model and tool graph with a conditional tool-call loop."""
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     tools = [lookup_course_fact]
@@ -92,7 +94,11 @@ def build_graph():
     builder.add_edge("tools", "chatbot")
 
     # A checkpointer is required for state to persist across calls sharing a thread_id.
-    return builder.compile(checkpointer=MemorySaver())
+    return builder.compile(checkpointer=checkpointer)
+
+
+# Exported for LangGraph Studio (langgraph.json); the server provides persistence.
+graph = build_graph()
 
 
 def main() -> None:
@@ -101,9 +107,9 @@ def main() -> None:
         raise RuntimeError("Set OPENAI_API_KEY in the project-root .env file.")
 
     configure_langsmith()
-    graph = build_graph()
+    local_graph = build_graph(checkpointer=MemorySaver())
 
-    result = graph.invoke(
+    result = local_graph.invoke(
         {
             "messages": [
                 (

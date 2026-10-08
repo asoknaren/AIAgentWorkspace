@@ -17,6 +17,71 @@ The standard construction pattern is:
 
 `START` marks where execution begins and `END` marks a completed run. They are graph control markers, not application nodes.
 
+
+## How `create_agent` relates to `StateGraph`
+
+`create_agent` and `StateGraph` are not competing frameworks. `create_agent` returns a compiled LangGraph graph with a prebuilt model-and-tools loop. In effect, it connects a model node, a tools node, and routing that sends tool results back to the model. You can inspect that graph with `agent.get_graph()`.
+
+### Use `create_agent` for a standard agent loop
+
+Choose `create_agent` when the main workflow is:
+
+1. Receive a user request.
+2. Let the model decide whether to call one or more tools.
+3. Run the requested tools.
+4. Give tool results back to the model for its final response.
+
+You provide the model, tools, and system prompt; the agent manages the model/tool-call loop. This is a good fit for assistants, support agents, and research helpers where the model can decide which tools to use.
+
+```python
+from langchain.agents import create_agent
+
+agent = create_agent(
+    model="openai:gpt-4o-mini",
+    tools=[get_weather, get_population],
+    system_prompt="You are a concise travel assistant. Use tools when useful.",
+)
+
+result = agent.invoke({"messages": [("user", "Compare Rome and London.")]})
+print(result["messages"][-1].content)
+```
+
+### Use `StateGraph` for custom orchestration
+
+Choose `StateGraph` when your application, rather than the model's usual tool loop, must explicitly control what happens next. Examples include:
+
+- Route requests to different specialist nodes.
+- Run independent nodes in parallel and join their results.
+- Add custom conditions, loops, or stop rules.
+- Insert human review or approval steps.
+- Coordinate multiple model calls or non-LLM services in a fixed sequence.
+- Specify the state fields and exactly how each node updates them.
+
+With `StateGraph`, you define the state, nodes, and edges yourself, then compile the graph. It takes more code but provides direct control over workflow behavior.
+
+```python
+from langgraph.graph import END, START, StateGraph
+
+builder = StateGraph(MyState)
+builder.add_node("classify", classify_request)
+builder.add_node("billing", handle_billing)
+builder.add_node("support", handle_support)
+builder.add_edge(START, "classify")
+builder.add_conditional_edges("classify", choose_route)
+builder.add_edge("billing", END)
+builder.add_edge("support", END)
+
+graph = builder.compile()
+result = graph.invoke({"request": "I was charged twice"})
+```
+
+### Quick decision rule
+
+- **The model chooses tools in a conventional assistant loop:** start with `create_agent`.
+- **Your application chooses the next step through custom logic:** use `StateGraph`.
+- **Not sure yet:** start with `create_agent`, then switch to a custom graph if you need workflow control the standard agent loop does not provide. A custom graph can also include an agent as one of its nodes.
+
+
 ## State and node updates
 
 State is the shared data flowing through the graph. In the examples it is described with a `TypedDict`:
@@ -128,65 +193,3 @@ The topics examples reverse the history when printing it so that the output read
 
 Replay does not erase the original later checkpoint history. The replay produces a continuation from the selected point, which can be inspected separately. This is useful for understanding what happened, recovering from an intermediate state, or exploring an alternate continuation. Be thoughtful when replaying workflows with external side effects, such as sending a payment or notification: those effects may happen again if the replay executes the corresponding node.
 
-## How `create_agent` relates to `StateGraph`
-
-`create_agent` and `StateGraph` are not competing frameworks. `create_agent` returns a compiled LangGraph graph with a prebuilt model-and-tools loop. In effect, it connects a model node, a tools node, and routing that sends tool results back to the model. You can inspect that graph with `agent.get_graph()`.
-
-### Use `create_agent` for a standard agent loop
-
-Choose `create_agent` when the main workflow is:
-
-1. Receive a user request.
-2. Let the model decide whether to call one or more tools.
-3. Run the requested tools.
-4. Give tool results back to the model for its final response.
-
-You provide the model, tools, and system prompt; the agent manages the model/tool-call loop. This is a good fit for assistants, support agents, and research helpers where the model can decide which tools to use.
-
-```python
-from langchain.agents import create_agent
-
-agent = create_agent(
-    model="openai:gpt-4o-mini",
-    tools=[get_weather, get_population],
-    system_prompt="You are a concise travel assistant. Use tools when useful.",
-)
-
-result = agent.invoke({"messages": [("user", "Compare Rome and London.")]})
-print(result["messages"][-1].content)
-```
-
-### Use `StateGraph` for custom orchestration
-
-Choose `StateGraph` when your application, rather than the model's usual tool loop, must explicitly control what happens next. Examples include:
-
-- Route requests to different specialist nodes.
-- Run independent nodes in parallel and join their results.
-- Add custom conditions, loops, or stop rules.
-- Insert human review or approval steps.
-- Coordinate multiple model calls or non-LLM services in a fixed sequence.
-- Specify the state fields and exactly how each node updates them.
-
-With `StateGraph`, you define the state, nodes, and edges yourself, then compile the graph. It takes more code but provides direct control over workflow behavior.
-
-```python
-from langgraph.graph import END, START, StateGraph
-
-builder = StateGraph(MyState)
-builder.add_node("classify", classify_request)
-builder.add_node("billing", handle_billing)
-builder.add_node("support", handle_support)
-builder.add_edge(START, "classify")
-builder.add_conditional_edges("classify", choose_route)
-builder.add_edge("billing", END)
-builder.add_edge("support", END)
-
-graph = builder.compile()
-result = graph.invoke({"request": "I was charged twice"})
-```
-
-### Quick decision rule
-
-- **The model chooses tools in a conventional assistant loop:** start with `create_agent`.
-- **Your application chooses the next step through custom logic:** use `StateGraph`.
-- **Not sure yet:** start with `create_agent`, then switch to a custom graph if you need workflow control the standard agent loop does not provide. A custom graph can also include an agent as one of its nodes.

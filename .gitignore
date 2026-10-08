@@ -23,5 +23,6 @@ dist/
 # macOS metadata
 .DS_Store
 
+.langgraph_api/
 .playwright-mcp/
 jnote/

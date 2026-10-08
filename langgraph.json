@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "intro": "./006_langgraph_intro.py:graph"
+  },
+  "env": ".env"
+}
