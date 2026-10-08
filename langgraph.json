@@ -1,7 +1,9 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "intro": "./006_langgraph_intro.py:graph"
+    "intro": "./006_langgraph_intro.py:graph",
+    "researcher": "./007_langgraph_topics1.py:graph",
+    "time_travel": "./008_langgraph_topics2.py:graph"
   },
   "env": ".env"
 }

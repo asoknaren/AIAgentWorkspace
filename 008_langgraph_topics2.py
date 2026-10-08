@@ -47,6 +47,10 @@ def build_graph(checkpointer):
     return builder.compile(checkpointer=checkpointer)
 
 
+# Exported for LangGraph Studio (langgraph.json); the server provides persistence.
+graph = build_graph(None)
+
+
 def show_history(graph, config: dict) -> list:
     """Display saved snapshots in execution order and return newest first."""
     history = list(graph.get_state_history(config))
@@ -60,6 +64,7 @@ def show_history(graph, config: dict) -> list:
 
 
 def demo_memory_and_replay() -> None:
+    
     """Show thread memory, checkpoint history, and replay from a checkpoint."""
     graph = build_graph(MemorySaver())
     config = {"configurable": {"thread_id": "memory-demo"}}

@@ -53,7 +53,7 @@ def summarize_node(state: LessonState) -> dict:
     return {"summary": summary, "events": ["Summary created"]}
 
 
-def build_graph():
+def build_graph(checkpointer=None):
     """Build a graph whose two research nodes execute in parallel."""
     builder = StateGraph(LessonState)
     builder.add_node("prepare", prepare_node)
@@ -69,7 +69,11 @@ def build_graph():
     builder.add_edge(["research_a", "research_b"], "summarize")
     builder.add_edge("summarize", END)
 
-    return builder.compile(checkpointer=MemorySaver())
+    return builder.compile(checkpointer=checkpointer)
+
+
+# Exported for LangGraph Studio (langgraph.json); the server provides persistence.
+graph = build_graph()
 
 
 def print_checkpoint_history(graph, config: dict) -> None:
@@ -89,7 +93,7 @@ def print_checkpoint_history(graph, config: dict) -> None:
 
 def main() -> None:
     """Run twice on one thread to show both supersteps and memory."""
-    graph = build_graph()
+    graph = build_graph(MemorySaver())
     config = {"configurable": {"thread_id": "supersteps-demo"}}
 
     print("=== First invocation ===")
