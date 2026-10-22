@@ -15,4 +15,5 @@ dependencies = [
 	"langgraph-cli[inmem]>=0.4.33",
 	"mcp>=1.30.0",
 	"python-dotenv",
+	"litellm<1.106",
 ]
