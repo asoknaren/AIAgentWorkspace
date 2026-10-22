@@ -16,4 +16,5 @@ dependencies = [
 	"mcp>=1.30.0",
 	"python-dotenv",
 	"litellm<1.106",
+	"rank-bm25>=0.2.2",
 ]
