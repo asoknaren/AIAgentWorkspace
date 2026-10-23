@@ -1,0 +1,14 @@
+{
+	"mcpServers": {
+		"local-orders": {
+			"type": "stdio",
+			"command": "C:\\NarenGitHubRepoPOCs\\AIAgentWorkspace\\AIAgentWorkspace/.venv/bin/python",
+			"args": [
+				"C:\\NarenGitHubRepoPOCs\\AIAgentWorkspace\\AIAgentWorkspace/401_local_mcp_server.py"
+			],
+			"tools": [
+				"*"
+			]
+		}
+	}
+}

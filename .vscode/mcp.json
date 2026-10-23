@@ -1,9 +1,4 @@
 {
   "servers": {
-    "local-orders": {
-      "type": "stdio",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["${workspaceFolder}/401_local_mcp_server.py"]
-    }
   }
 }
