@@ -10,7 +10,7 @@ ORDERS = {
         "items": [{"sku": "KB-01", "quantity": 1}, {"sku": "MS-02", "quantity": 2}],
         "total": 129.97,
     },
-    "A200": {
+    "K200": {
         "customer": "bob",
         "status": "processing",
         "estimated_delivery": "2026-10-14",
